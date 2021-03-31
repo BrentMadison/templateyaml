@@ -1,0 +1,69 @@
+Resources:
+  MyInstance:
+    Type:  AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-05d72852800cbf29e
+      Tags:
+        - Key: "Name"
+          Value: "IML Bootcamp EC2 Instance"
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #!/bin/bash -xe
+            - |
+              yum update -y aws-cfn-bootstrap
+            - |
+              # Install the files and packages from the metadata
+            - '/opt/aws/bin/cfn-init -v '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource MyInstance '
+            - '         --configsets configs '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+    
+    
+    Metadata:
+      AWS::CloudFormation::Init:
+        configsets:
+          configs:
+            - "config-webapp"
+            
+        config-webapp:
+          packages:
+            yum:
+              php: []
+              httpd: []
+          files:
+            /var/www/html/index.php:
+              content: <?.php print Hello World, IML Bootcamp was here!"; ?>
+          services: 
+            sysvinit: 
+              httpd: 
+                enabled: "true"
+                ensureRunning: "true"
+                  # files: 
+                  #   - "/etc/nginx/nginx.conf"
+                  # sources: 
+                  #   - "/var/www/html"
+              cfn-hup: 
+                enabled: "true"
+                ensureRunning: "true"
+                  
+
+
+
+            # commands:
+            #   startHTTPD:
+            #     command: sudo systemctl startHTTPD
+            #     #cwd:         
+
+Outputs:
+  InstanceDNS:
+    Description: The Instance DNS Path
+    Value: !GetAtt MyInstance.PublicDnsName             
+        
